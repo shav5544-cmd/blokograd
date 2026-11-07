@@ -291,13 +291,17 @@ function screenMap(){stopGame();cur=null;checkAch();
  <div class="menu"><button class="btn orange" id="bMine">⛏ Шахта<span class="sub">Рекорд: ${S.mineBest} блоков</span></button>
  <button class="btn blue" id="bKnow">🧠 Карта знаний<span class="sub">${masteredCount()} из 55</span></button>
  <button class="btn purple" id="bShop">🛒 Магазин<span class="sub">Скины для героя</span></button>
- <button class="btn gold" id="bAch">🏆 Достижения<span class="sub">${Object.keys(S.ach).length} из ${ACH.length}</span></button></div>`;
+ <button class="btn gold" id="bAch">🏆 Достижения<span class="sub">${Object.keys(S.ach).length} из ${ACH.length}</span></button>
+ <button class="btn ${S.ach.boss?'red':'grey'}" id="bCert">📜 Сертификат<span class="sub">${S.ach.boss?'Получен! Открыть':'Победи Голема'}</span></button>
+ <button class="btn blue" id="bSave">💾 Сохранение<span class="sub">Перенести прогресс</span></button></div>`;
  fillSprites();bindTop();
  app.querySelectorAll('.isl').forEach(e=>e.onclick=()=>{const i=+e.dataset.i;if(i>=S.unlocked){SFX.bad();toast('🔒 Сначала победи предыдущий остров!');return}SFX.click();startLevel(i)});
  document.getElementById('bMine').onclick=()=>{SFX.click();startMine()};
  document.getElementById('bKnow').onclick=()=>{SFX.click();screenKnow()};
  document.getElementById('bShop').onclick=()=>{SFX.click();screenShop()};
- document.getElementById('bAch').onclick=()=>{SFX.click();screenAch()}}
+ document.getElementById('bAch').onclick=()=>{SFX.click();screenAch()};
+ document.getElementById('bCert').onclick=()=>{SFX.click();if(S.ach.boss)screenCert();else modal('<h2>📜 Сертификат</h2><p>Сертификат «Мастер умножения» выдаётся тому, кто пройдёт все острова и победит <b>Тёмного Голема</b>.</p><p>Вперёд, герой!</p>',[{t:'Понятно'}])};
+ document.getElementById('bSave').onclick=()=>{SFX.click();screenSave()}}
 
 /* ----- 3D ПРИКЛЮЧЕНИЕ ----- */
 const SX=56,SZ=56,SY=28,GRAV=28,JUMPV=9.2,SPEED=4.8;
@@ -573,7 +577,7 @@ function endFight(){if(!G)return;G.state='play';G.target=null;G.p.inv=1;cur=null
 function gWin(){G.state='end';cur=null;const i=G.i,lv=G.lv,all=G.killed>=G.total,perfect=G.hearts===5,st=1+(all?1:0)+(perfect?1:0);
  S.stars[i]=Math.max(S.stars[i]||0,st);const bonus=lv.boss?50:st*5;S.crystals+=bonus;S.wins=(S.wins||0)+1;const newIsland=i+1<LEVELS.length&&S.unlocked<=i+1;if(newIsland)S.unlocked=i+2;save();
  unlockAch('first');if(perfect)unlockAch('perfect');if(lv.boss)unlockAch('boss');checkAch();SFX.win();const got=G.got;
- const btns=[];if(i+1<LEVELS.length)btns.push({t:'Следующий остров ▶',f:()=>startLevel(i+1)});btns.push({t:'Пройти ещё раз',cls:'blue',f:()=>startLevel(i)});btns.push({t:'На карту',cls:'grey',f:screenMap});
+ const btns=[];if(lv.boss)btns.push({t:'📜 Получить сертификат',cls:'gold',f:screenCert});if(i+1<LEVELS.length)btns.push({t:'Следующий остров ▶',f:()=>startLevel(i+1)});btns.push({t:'Пройти ещё раз',cls:'blue',f:()=>startLevel(i)});btns.push({t:'На карту',cls:'grey',f:screenMap});
  modal(`<h2>${lv.boss?'ТЫ ПОБЕДИЛ ГОЛЕМА!':'ОСТРОВ ПРОЙДЕН!'}</h2><div class="bigstars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div>
  <p style="font-size:15px;text-align:left;display:inline-block">★ Дошёл до портала<br>${all?'★':'☆'} Победил всех мобов (${G.killed}/${G.total})<br>${perfect?'★':'☆'} Не потерял ни одного сердца</p>
  <p>Награда: <b>+${got+bonus} 💎</b></p>${newIsland&&i+1<LEVELS.length?`<p style="color:#7ed957"><b>Открыт новый остров: ${LEVELS[i+1].name}!</b></p>`:''}${lv.boss?'<p>Ты настоящий <b>Мастер умножения</b>! 👑</p>':''}`,btns)}
@@ -632,6 +636,50 @@ function screenAch(){stopGame();cur=null;app.innerHTML=topbar()+`<div style="dis
  ${ACH.map(a=>`<div class="panel ach ${S.ach[a.id]?'':'no'}"><div class="ic">${a.ic}</div><div><b>${a.n}</b><small>${a.d}</small></div><div style="margin-left:auto;font-size:22px">${S.ach[a.id]?'✅':'🔒'}</div></div>`).join('')}
  <p class="note">Лучшее комбо: <b>${S.bestCombo}</b> · Побед: <b>${S.wins||0}</b> · Рекорд шахты: <b>${S.mineBest}</b></p>`;
  fillSprites();bindTop();document.getElementById('back').onclick=()=>{SFX.click();screenMap()}}
+
+
+/* ----- СЕРТИФИКАТ ----- */
+function drawCert(){const W=1200,H=850,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+ g.fillStyle='#fdf6e3';g.fillRect(0,0,W,H);
+ const bl=['#5aa83a','#8a5a2b','#7d7d85','#ffd23f','#2f8de4','#e53935','#8a5cd6'];for(let x=0;x<W;x+=30)for(const y of[0,H-30]){g.fillStyle=bl[(x/30+y)%bl.length|0];g.fillRect(x,y,30,30);g.fillStyle='rgba(0,0,0,.15)';g.fillRect(x,y+24,30,6)}
+ for(let y=30;y<H-30;y+=30)for(const x of[0,W-30]){g.fillStyle=bl[(y/30+x)%bl.length|0];g.fillRect(x,y,30,30);g.fillStyle='rgba(0,0,0,.15)';g.fillRect(x,y+24,30,6)}
+ g.strokeStyle='#c9a227';g.lineWidth=6;g.strokeRect(54,54,W-108,H-108);
+ g.textAlign='center';g.fillStyle='#2b3044';g.font='46px "Press Start 2P"';g.fillText('СЕРТИФИКАТ',W/2,150);
+ g.fillStyle='#c9a227';g.font='22px "Press Start 2P"';g.fillText('МАСТЕР УМНОЖЕНИЯ',W/2,205);
+ g.fillStyle='#555';g.font='24px Rubik, sans-serif';g.fillText('Настоящим подтверждается, что',W/2,270);
+ g.fillStyle='#1f6fbf';g.font='bold 64px Rubik, sans-serif';g.fillText(S.name,W/2,350);g.fillStyle='#c9a227';g.fillRect(W/2-260,368,520,4);
+ g.fillStyle='#333';g.font='26px Rubik, sans-serif';g.fillText('прошёл все острова Блокограда, победил Тёмного Голема',W/2,425);g.fillText('и доказал знание таблицы умножения!',W/2,462);
+ const stars=Object.values(S.stars).reduce((a,b)=>a+b,0);const st=[[masteredCount()+' из 55','освоено примеров'],[stars+' из 27','звёзд собрано'],[S.bestCombo,'лучшее комбо']];
+ st.forEach(([v,l],k)=>{const x=W/2+(k-1)*300;g.fillStyle='#2b3044';g.fillRect(x-120,505,240,110);g.fillStyle='#ffd23f';g.font='26px "Press Start 2P"';g.fillText(String(v),x,560);g.fillStyle='#fff';g.font='18px Rubik, sans-serif';g.fillText(l,x,595)});
+ const hero=draw(heroSpr(),9);g.imageSmoothingEnabled=false;g.drawImage(hero,W/2-190,630);const gol=draw(SPR.golem,8);g.drawImage(gol,W/2+110,668);
+ g.fillStyle='#e53935';g.beginPath();g.arc(W/2,705,48,0,7);g.fill();g.fillStyle='#ffd23f';g.font='34px "Press Start 2P"';g.fillText('★',W/2,720);
+ const d=new Date(),dd=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear();
+ g.fillStyle='#555';g.font='20px Rubik, sans-serif';g.textAlign='left';g.fillText('Дата: '+(S.certDate||dd),110,770);g.textAlign='right';g.fillText('Блокоград · shav5544-cmd.github.io/blokograd',W-110,770);
+ return c}
+async function screenCert(){stopGame();cur=null;if(!S.certDate){const d=new Date();S.certDate=('0'+d.getDate()).slice(-2)+'.'+('0'+(d.getMonth()+1)).slice(-2)+'.'+d.getFullYear();save()}
+ try{await document.fonts.load('46px "Press Start 2P"');await document.fonts.load('bold 64px Rubik')}catch(e){}
+ const c=drawCert(),url=c.toDataURL('image/png');SFX.win();
+ app.innerHTML=topbar()+`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button class="btn grey" id="back">← Карта</button><h2 class="sec" style="margin:0">Твой сертификат</h2></div>
+ <img src="${url}" alt="Сертификат" style="width:100%;border:4px solid #11131b;display:block">
+ <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><a class="btn gold" id="dl" href="${url}" download="Сертификат_${esc(S.name)}.png" style="text-decoration:none">⬇ Скачать картинку</a></div>
+ <p class="note">На телефоне или планшете можно также нажать на картинку и удерживать → «Сохранить изображение».</p>`;
+ bindTop();document.getElementById('back').onclick=()=>{SFX.click();screenMap()}}
+
+/* ----- СОХРАНЕНИЕ ----- */
+function screenSave(){stopGame();cur=null;const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+ app.innerHTML=topbar()+`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button class="btn grey" id="back">← Карта</button><h2 class="sec" style="margin:0">Сохранение</h2></div>
+ <div class="panel"><p style="font-size:16px;line-height:1.45;margin-top:0">Прогресс хранится только в этом браузере. Чтобы продолжить игру на другом устройстве (или перейти со старого файла на сайт):<br>1) здесь нажми <b>«Скопировать код»</b>;<br>2) отправь код себе (например, в Telegram);<br>3) на другом устройстве открой «Сохранение» и вставь код в нижнее поле.</p>
+ <textarea id="code" readonly style="width:100%;height:90px;font-size:12px;background:#151824;color:#7ff3ff;border:3px solid #11131b">${code}</textarea>
+ <button class="btn" id="cp" style="margin-top:8px">📋 Скопировать код</button></div>
+ <div class="panel" style="margin-top:12px"><b style="font-size:17px">Загрузить прогресс с другого устройства</b>
+ <textarea id="inp" placeholder="Вставь код сюда" style="width:100%;height:90px;font-size:12px;margin-top:8px;background:#151824;color:#fff;border:3px solid #11131b"></textarea>
+ <button class="btn orange" id="ld" style="margin-top:8px">📥 Загрузить</button></div>`;
+ bindTop();document.getElementById('back').onclick=()=>{SFX.click();screenMap()};
+ document.getElementById('cp').onclick=async()=>{const t=document.getElementById('code');try{await navigator.clipboard.writeText(t.value);toast('Код скопирован! 📋')}catch(e){t.select();try{document.execCommand('copy');toast('Код скопирован! 📋')}catch(_){toast('Выдели код и скопируй вручную')}}};
+ document.getElementById('ld').onclick=()=>{const v=document.getElementById('inp').value.trim();if(!v){toast('Сначала вставь код');return}
+  try{const o=JSON.parse(decodeURIComponent(escape(atob(v))));if(typeof o!=='object'||!('crystals' in o))throw 0;
+   modal(`<h2>Загрузить прогресс?</h2><p>Герой: <b>${esc(o.name||'?')}</b><br>Кристаллы: ${o.crystals} · Открыто островов: ${o.unlocked}</p><p style="color:#ffb547">Текущий прогресс на этом устройстве будет заменён.</p>`,
+   [{t:'Да, загрузить',f:()=>{S=Object.assign(defaults(),o);save();SFX.win();toast('Прогресс загружен! 🎉');screenMap()}},{t:'Отмена',cls:'grey'}])}catch(e){SFX.bad();toast('Код не подходит. Проверь, что скопирован целиком.')}}}
 
 /* ===================== СТАРТ ===================== */
 if(!S.name)screenName();else{checkDaily();screenMap()}
