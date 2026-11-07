@@ -113,6 +113,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .msg3{position:absolute;top:34%;left:50%;transform:translateX(-50%);background:#000c;padding:12px 16px;font-weight:900;font-size:18px;display:none;pointer-events:none;text-align:center}
 .banner3{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#000c;border:4px solid #11131b;padding:18px;text-align:center;width:min(560px,92%);pointer-events:none;display:flex;flex-direction:column;gap:10px}
 .banner3 b{font-family:'Press Start 2P',monospace;font-size:18px;color:#ffd23f}.banner3 span{font-size:17px;font-weight:700}.banner3 small{color:#c7cbe0;font-size:14px;line-height:1.4}
+.micb{position:absolute;right:20px;top:140px;font-size:13px!important;padding:9px 11px!important}.g3.touch .micb{top:auto;bottom:172px}.g3.quizon .micb{display:none!important}
 .potb{position:absolute;right:20px;top:92px;font-size:14px!important;padding:10px 12px!important;background:#8a5cd6cc!important}
 .g3.touch .potb{top:auto;bottom:120px}.g3.quizon .potb{display:none}
 .joy{position:absolute;left:22px;bottom:22px;width:120px;height:120px;border-radius:50%;background:#ffffff22;border:3px solid #ffffff66;display:none;pointer-events:none}
@@ -196,8 +197,10 @@ const HATS={none:{n:'Без шапки',r:["........","........"],c:'#000',cost:
  helmet:{n:'Железный шлем',r:[".XXXXXX.","XXXXXXXX"],c:'#c9ced8',cost:100},
  crown:{n:'Корона',r:["X..XX..X","XXXXXXXX"],c:'#ffd23f',cost:200}};
 const SHIRTS=[{c:'#2f8de4',n:'Синяя',cost:0},{c:'#e53935',n:'Красная',cost:30},{c:'#43a047',n:'Зелёная',cost:30},{c:'#8a5cd6',n:'Фиолетовая',cost:50},{c:'#ff9800',n:'Оранжевая',cost:50},{c:'#222631',n:'Чёрная',cost:80},{c:'#ffd23f',n:'Золотая',cost:150}];
-function heroSpr(skin){const sk=skin||S.skin;const h=HATS[sk.hat]||HATS.none;return{p:{H:'#5a3a1e',S:'#f1c27d',W:'#ffffff',E:'#2b2b5a',M:'#b5523b',T:sk.shirt,P:'#2b4a8a',B:'#3a2a1a',X:h.c},
- r:[...h.r,"HHHHHHHH","HSSSSSSH","SWESSEWS","SSSSSSSS","SSSMMSSS","SSSSSSSS","TTTTTTTT","TTTTTTTT","STTTTTTS","PPPPPPPP","PPP..PPP","BBB..BBB"]}}
+const CHARS=[{k:'max',n:'Макс',hair:'#5a3a1e',skin:'#f1c27d',pants:'#2b4a8a'},{k:'leya',n:'Лея',hair:'#f2c14e',skin:'#f6d1b0',pants:'#7b3fa0',long:1},{k:'timur',n:'Тимур',hair:'#1a1a1a',skin:'#c68a5a',pants:'#3a3a3a'},{k:'ryzhik',n:'Рыжик',hair:'#d9622b',skin:'#f3c9a0',pants:'#6b4423'},{k:'ninja',n:'Ниндзя',hair:'#151515',skin:'#e0b080',pants:'#222222',mask:1}];
+const charOf=sk=>CHARS.find(c=>c.k===((sk||S.skin).char||'max'))||CHARS[0];
+function heroSpr(skin){const sk=skin||S.skin;const h=HATS[sk.hat]||HATS.none,ch=charOf(sk);return{p:{H:ch.hair,S:ch.skin,W:'#ffffff',E:'#2b2b5a',M:ch.mask?'#222':'#b5523b',K:'#222',R:'#d32f2f',T:sk.shirt,P:ch.pants,B:'#3a2a1a',X:h.c},
+ r:[...h.r,"HHHHHHHH",ch.mask?"RRRRRRRR":"HSSSSSSH","SWESSEWS",ch.mask?"KKKKKKKK":"SSSSSSSS",ch.mask?"KKKKKKKK":"SSSMMSSS",ch.long?"HSSSSSSH":"SSSSSSSS","TTTTTTTT","TTTTTTTT","STTTTTTS","PPPPPPPP","PPP..PPP","BBB..BBB"]}}
 function draw(spr,scale){const rows=spr.r,h=rows.length,w=Math.max(...rows.map(x=>x.length));const c=document.createElement('canvas');c.width=w*scale;c.height=h*scale;const g=c.getContext('2d');
  rows.forEach((row,y)=>{[...row].forEach((ch,x)=>{const col=spr.p[ch];if(col){g.fillStyle=col;g.fillRect(x*scale,y*scale,scale,scale);g.fillStyle='rgba(0,0,0,.10)';g.fillRect(x*scale,(y+1)*scale-Math.max(1,scale/5),scale,Math.max(1,scale/5))}})});return c}
 function fillSprites(root){(root||document).querySelectorAll('[data-spr]').forEach(el=>{const k=el.dataset.spr,sc=+el.dataset.sc||8;let spr;if(k==='hero'){spr=heroSpr(el.dataset.skin?JSON.parse(el.dataset.skin):null)}else spr=SPR[k];el.innerHTML='';el.appendChild(draw(spr,sc))})}
@@ -387,17 +390,17 @@ function voxelMob(type,size){const spr=SPR[type],rows=spr.r,hgt=rows.length,wid=
   c.set(d===0||d===D-1?col:main);if(d>0&&d<D-1)c.multiplyScalar(.85);m.setColorAt(k,c);k++}});
  const g=new THREE.Group();g.add(m);g.userData.main=main;return g}
 
-function faceMat(kind){const c=document.createElement('canvas');c.width=c.height=8;const g=c.getContext('2d');g.fillStyle='#f1c27d';g.fillRect(0,0,8,8);g.fillStyle='#5a3a1e';
- if(kind==='front'){g.fillRect(0,0,8,2);g.fillRect(0,2,1,1);g.fillRect(7,2,1,1);g.fillStyle='#fff';g.fillRect(1,3,2,1);g.fillRect(5,3,2,1);g.fillStyle='#2b2b5a';g.fillRect(2,3,1,1);g.fillRect(5,3,1,1);g.fillStyle='#b5523b';g.fillRect(3,5,2,1)}
- else if(kind==='side')g.fillRect(0,0,8,3);else if(kind==='back')g.fillRect(0,0,8,6);else if(kind==='top')g.fillRect(0,0,8,8);
+function faceMat(kind,ch){ch=ch||CHARS[0];const c=document.createElement('canvas');c.width=c.height=8;const g=c.getContext('2d');g.fillStyle=ch.skin;g.fillRect(0,0,8,8);g.fillStyle=ch.hair;
+ if(kind==='front'){g.fillRect(0,0,8,2);g.fillRect(0,2,1,1);g.fillRect(7,2,1,1);g.fillStyle='#fff';g.fillRect(1,3,2,1);g.fillRect(5,3,2,1);g.fillStyle='#2b2b5a';g.fillRect(2,3,1,1);g.fillRect(5,3,1,1);g.fillStyle='#b5523b';g.fillRect(3,5,2,1);g.fillStyle=ch.hair;if(ch.long){g.fillRect(0,2,1,6);g.fillRect(7,2,1,6)}if(ch.mask){g.fillStyle='#222';g.fillRect(0,4,8,4);g.fillStyle='#d32f2f';g.fillRect(0,2,8,1)}}
+ else if(kind==='side'){g.fillRect(0,0,8,ch.long?8:3);if(ch.mask){g.fillStyle='#222';g.fillRect(0,4,8,4);g.fillStyle='#d32f2f';g.fillRect(0,2,8,1)}}else if(kind==='back'){g.fillRect(0,0,8,ch.long?8:6);if(ch.mask){g.fillStyle='#d32f2f';g.fillRect(0,2,8,1)}}else if(kind==='top')g.fillRect(0,0,8,8);
  return new THREE.MeshLambertMaterial({map:nearest(new THREE.CanvasTexture(c))})}
 function buildHero(skin,swordK){const L=c=>new THREE.MeshLambertMaterial({color:c}),box=(w,h,d,m)=>new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);const grp=new THREE.Group(),sk=skin||S.skin;
- const sideM=faceMat('side'),head=box(.46,.46,.46,[sideM,sideM,faceMat('top'),L('#f1c27d'),faceMat('front'),faceMat('back')]);head.position.y=1.5;grp.add(head);
+ const ch=charOf(sk),sideM=faceMat('side',ch),head=box(.46,.46,.46,[sideM,sideM,faceMat('top',ch),L(ch.skin),faceMat('front',ch),faceMat('back',ch)]);head.position.y=1.5;grp.add(head);
  const body=box(.5,.62,.28,L(sk.shirt));body.position.y=1.0;grp.add(body);
  const limb=(x,y,w,h,col,top,bot)=>{const p=new THREE.Group();p.position.set(x,y,0);const m=box(w,h,w,L(col));m.position.y=-h/2;p.add(m);
-  if(top){const t=box(w+.02,.24,w+.02,L(top));t.position.y=-.12;p.add(t)}if(bot){const b=box(w+.02,.12,w+.02,L(bot));b.position.y=-h+.06;p.add(b)}grp.add(p);return p};
- const armL=limb(-.34,1.28,.18,.6,'#f1c27d',sk.shirt),armR=limb(.34,1.28,.18,.6,'#f1c27d',sk.shirt);
- const legL=limb(-.13,.69,.23,.69,'#2b4a8a',null,'#3a2a1a'),legR=limb(.13,.69,.23,.69,'#2b4a8a',null,'#3a2a1a');
+  if(top){const t=box(w+.02,.26,w+.02,L(top));t.position.y=-.115;p.add(t)}if(bot){const b=box(w+.02,.12,w+.02,L(bot));b.position.y=-h+.06;p.add(b)}grp.add(p);return p};
+ const armL=limb(-.36,1.28,.18,.6,ch.skin,sk.shirt),armR=limb(.36,1.28,.18,.6,ch.skin,sk.shirt);
+ const legL=limb(-.125,.69,.22,.69,ch.pants,null,'#3a2a1a'),legR=limb(.125,.69,.22,.69,ch.pants,null,'#3a2a1a');
  const hat=HATS[sk.hat]||HATS.none,hc=L(hat.c);
  if(sk.hat==='cap'){const a=box(.5,.12,.5,hc);a.position.y=.29;head.add(a);const b=box(.5,.04,.24,hc);b.position.set(0,.25,.34);head.add(b)}
  else if(sk.hat==='crown'){const a=box(.5,.1,.5,hc);a.position.y=.28;head.add(a);[[-.2,-.2],[.2,-.2],[-.2,.2],[.2,.2]].forEach(([x,z])=>{const b=box(.1,.12,.1,hc);b.position.set(x,.38,z);head.add(b)})}
@@ -420,7 +423,7 @@ function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.ope
  <div class="cmp"><div class="arr" id="arr">▲</div><div id="cmpt"></div></div><div class="combo3" id="combo"></div><div class="msg3" id="msg"></div>
  <div class="banner3" id="ban"><b>${lv.name}</b><span>${lv.boss?'Все таблицы! Победи всех мобов — и щит Тёмного Голема исчезнет':'Таблица на '+lv.t+'. Победи всех мобов — тогда исчезнет щит стража портала!'}</span>
  <small>${touch?'Левый палец — идти · Правый — крутить камеру · ▲ — прыжок':'W A S D или стрелки — идти · Пробел — прыжок<br>Зажми мышь и двигай — поворот камеры · Колесо — приблизить'}</small><small>Жёлтая стрелка наверху показывает, где ближайший моб</small></div>
- <button class="btn potb" id="potb">🧪 <span id="potn">${S.potions||0}</span></button><div class="joy" id="joy"><i id="knob"></i></div><button class="btn jbtn" id="jbtn">▲</button>
+ <button class="btn micb" id="micb" style="display:${NET&&NET.open?"block":"none"}">🎤 Выкл</button><button class="btn potb" id="potb">🧪 <span id="potn">${S.potions||0}</span></button><div class="joy" id="joy"><i id="knob"></i></div><button class="btn jbtn" id="jbtn">▲</button>
  <div id="quiz" class="quiz3" hidden><div class="lbl" id="qlbl"></div><div class="q" id="q"></div><div class="fb" id="fb"></div>
  <div class="pad2">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button class="btn" data-d="${n}">${n}</button>`).join('')}<button class="btn del" data-d="del">⌫</button><button class="btn ok" data-d="ok">✔</button></div></div></div>`;
  bindTop();document.getElementById('back').onclick=()=>{SFX.click();screenMap()};
@@ -472,7 +475,7 @@ function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.ope
  const up=e=>{if(!G)return;if(G.joy&&e.pointerId===G.joy.id){G.joy=null;document.getElementById('knob').style.transform=''}if(drag&&e.pointerId===drag.id)drag=null};
  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
  el.addEventListener('wheel',e=>{if(!G)return;e.preventDefault();G.dist=Math.max(3,Math.min(11,G.dist+e.deltaY*.005))},{passive:false});
- document.getElementById('potb').addEventListener('pointerdown',e=>{e.preventDefault();usePotion()});const jb=document.getElementById('jbtn');jb.addEventListener('pointerdown',e=>{e.preventDefault();if(G)G.jumpBuf=.2});
+ document.getElementById('potb').addEventListener('pointerdown',e=>{e.preventDefault();usePotion()});document.getElementById('micb').addEventListener('click',e=>{e.preventDefault();voiceToggle()});micBtn();const jb=document.getElementById('jbtn');jb.addEventListener('pointerdown',e=>{e.preventDefault();if(G)G.jumpBuf=.2});
  G.onResize=()=>{if(!G)return;const w=box.clientWidth,h=box.clientHeight;R.setSize(w,h);G.cam.aspect=w/h;G.cam.updateProjectionMatrix()};window.addEventListener('resize',G.onResize);G.onResize();
  G.lt=0;G.raf=requestAnimationFrame(loop)}
 function stopGame(){if(G){G.dead=true;cancelAnimationFrame(G.raf);if(G.onResize)window.removeEventListener('resize',G.onResize);if(G.renderer){try{G.renderer.dispose();G.renderer.forceContextLoss()}catch(e){}}}G=null;cur=null}
@@ -640,12 +643,14 @@ function screenShop(){stopGame();cur=null;const own=(id,cost)=>cost===0||S.owned
  const pets=petList().map(p=>{const id='pet:'+p.k,locked=!(S.stars[p.need]>0);return card(id,p.cost,S.pet===p.k,`<div data-spr="${p.k}" data-sc="${p.k==='golem'?10:11}"></div>`,p.n,locked?'🔒 Победи: '+p.lv.name:'')}).join('')
   +card('pet:none',0,!S.pet,'<div style="font-size:40px">🚫</div>','Без питомца');
  const swords=SWORDS.map(w=>card('sword:'+w.k,w.cost,(S.sword||'iron')===w.k,`<div style="width:14px;height:96px;background:${w.c};box-shadow:0 0 14px ${w.c};position:relative"><i style="position:absolute;left:-14px;bottom:18px;width:42px;height:8px;background:#ffd23f"></i><i style="position:absolute;left:2px;bottom:-14px;width:10px;height:16px;background:#6b4423"></i></div>`,w.n)).join('');
+ const chars=CHARS.map(c=>card('char:'+c.k,0,(S.skin.char||'max')===c.k,`<div data-spr="hero" data-sc="7" data-skin='${JSON.stringify({shirt:S.skin.shirt,hat:S.skin.hat,char:c.k})}'></div>`,c.n)).join('');
  const potion=`<div class="panel item" data-id="potion:1" data-cost="25"><div class="pv" style="font-size:60px">🧪</div><div style="font-weight:900">Зелье жизни</div><div class="px" style="font-size:10px;margin-top:6px;color:#7ff3ff">💎 25 · есть: ${S.potions||0}</div></div>`;
- const shirts=SHIRTS.map(x=>card('shirt:'+x.c,x.cost,S.skin.shirt===x.c,`<div data-spr="hero" data-sc="7" data-skin='${JSON.stringify({shirt:x.c,hat:S.skin.hat})}'></div>`,x.n)).join('');
- const hats=Object.entries(HATS).map(([k,h])=>card('hat:'+k,h.cost,S.skin.hat===k,`<div data-spr="hero" data-sc="7" data-skin='${JSON.stringify({shirt:S.skin.shirt,hat:k})}'></div>`,h.n)).join('');
+ const shirts=SHIRTS.map(x=>card('shirt:'+x.c,x.cost,S.skin.shirt===x.c,`<div data-spr="hero" data-sc="7" data-skin='${JSON.stringify({shirt:x.c,hat:S.skin.hat,char:S.skin.char})}'></div>`,x.n)).join('');
+ const hats=Object.entries(HATS).map(([k,h])=>card('hat:'+k,h.cost,S.skin.hat===k,`<div data-spr="hero" data-sc="7" data-skin='${JSON.stringify({shirt:S.skin.shirt,hat:k,char:S.skin.char})}'></div>`,h.n)).join('');
  app.innerHTML=topbar()+`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button class="btn grey" id="back">← Карта</button><h2 class="sec" style="margin:0">Магазин</h2></div>
  <p class="note">Зарабатывай кристаллы 💎 в битвах, сундуках и шахте — и трать их здесь!</p>
- <h2 class="sec">🐾 Питомцы <small style="font-size:9px;color:#c7cbe0">бегают за тобой по острову</small></h2><div class="shop">${pets}</div>
+ <h2 class="sec">🧍 Персонаж <small style="font-size:9px;color:#c7cbe0">бесплатно</small></h2><div class="shop">${chars}</div>
+ <h2 class="sec" style="margin-top:18px">🐾 Питомцы <small style="font-size:9px;color:#c7cbe0">бегают за тобой по острову</small></h2><div class="shop">${pets}</div>
  <h2 class="sec" style="margin-top:18px">⚔️ Мечи</h2><div class="shop">${swords}</div>
  <h2 class="sec" style="margin-top:18px">🧪 Зелья <small style="font-size:9px;color:#c7cbe0">в бою нажми 🧪 или Q — +1 сердце</small></h2><div class="shop">${potion}</div>
  <h2 class="sec" style="margin-top:18px">👕 Одежда</h2><div class="shop">${shirts}</div><h2 class="sec" style="margin-top:18px">🎩 Шапки</h2><div class="shop">${hats}</div>`;
@@ -654,7 +659,7 @@ function screenShop(){stopGame();cur=null;const own=(id,cost)=>cost===0||S.owned
   if(type==='pet'&&val!=='none'){const p=petList().find(x=>x.k===val);if(!(S.stars[p.need]>0)){SFX.bad();toast('🔒 Сначала победи остров «'+p.lv.name+'»');return}}
   if(type==='potion'){if(S.crystals<cost){SFX.bad();toast(`Не хватает: нужно ещё ${cost-S.crystals} 💎`);return}S.crystals-=cost;S.potions=(S.potions||0)+1;save();SFX.coin();toast('🧪 Зелье куплено!');screenShop();return}
   if(!own(id,cost)){if(S.crystals<cost){SFX.bad();toast(`Не хватает кристаллов: нужно ещё ${cost-S.crystals} 💎`);return}S.crystals-=cost;S.owned.push(id);SFX.coin();toast('Куплено! 🎉')}else SFX.click();
-  if(type==='shirt')S.skin.shirt=val;else if(type==='hat')S.skin.hat=val;else if(type==='sword')S.sword=val;else if(type==='pet')S.pet=val==='none'?null:val;save();screenShop()})}
+  if(type==='char')S.skin.char=val;else if(type==='shirt')S.skin.shirt=val;else if(type==='hat')S.skin.hat=val;else if(type==='sword')S.sword=val;else if(type==='pet')S.pet=val==='none'?null:val;save();screenShop()})}
 
 /* ----- ДОСТИЖЕНИЯ ----- */
 function screenAch(){stopGame();cur=null;app.innerHTML=topbar()+`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button class="btn grey" id="back">← Карта</button><h2 class="sec" style="margin:0">Достижения</h2></div>
@@ -710,9 +715,9 @@ function screenSave(){stopGame();cur=null;const code=btoa(unescape(encodeURIComp
 /* ===================== ИГРА ВДВОЁМ ===================== */
 let NET=null;
 function netSend(o){if(NET&&NET.open&&NET.conn){try{NET.conn.send(o)}catch(e){}}}
-function netClose(){if(NET){try{NET.conn&&NET.conn.close()}catch(e){}try{NET.peer&&NET.peer.destroy()}catch(e){}}NET=null}
+function netClose(){if(NET){try{NET.mic&&NET.mic.getTracks().forEach(t=>t.stop())}catch(e){}try{NET.audio&&(NET.audio.srcObject=null)}catch(e){}try{NET.conn&&NET.conn.close()}catch(e){}try{NET.peer&&NET.peer.destroy()}catch(e){}}NET=null}
 function nameTag(t){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,8,256,48);g.fillStyle='#ffd23f';g.font='bold 34px Rubik, sans-serif';g.textAlign='center';g.fillText(t,128,44);
- const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));sp.scale.set(1.6,.4,1);sp.position.y=2.2;return sp}
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));sp.scale.set(1.2,.3,1);sp.position.y=2.15;return sp}
 function netTick(dt){if(!G||!G.mp)return;G.netT-=dt;G.mobT-=dt;const p=G.p;
  if(G.netT<=0){G.netT=.09;netSend({t:'pos',x:+p.x.toFixed(2),y:+p.y.toFixed(2),z:+p.z.toFixed(2),f:+p.face.toFixed(2),mv:Math.hypot(p.vx,p.vz)>.1?1:0,sw:p.swing>0?1:0})}
  if(NET.host&&G.mobT<=0){G.mobT=.15;netSend({t:'mobs',a:G.mobs.map(m=>[+m.x.toFixed(2),+m.z.toFixed(2),+(m.face||0).toFixed(2)])})}}
@@ -721,7 +726,11 @@ function friendTick(dt){if(!G||!G.mp||!G.friend)return;const F=G.friend,f=G.fr,g
  if(f.mv)F.phase+=dt*10;else F.phase*=.85;const sw=Math.sin(F.phase)*.75;F.legL.rotation.x=sw;F.legR.rotation.x=-sw;F.armL.rotation.x=-sw*.8;
  F.armR.rotation.x=f.sw?-1.6:sw*.8;F.sword.visible=!!f.sw}
 function onNet(d){if(!d||!d.t)return;
- if(d.t==='hello'){NET.fName=String(d.name||'Друг').slice(0,14);NET.fSkin=d.skin||{shirt:'#e53935',hat:'none'};NET.fSword=d.sword||'iron';if(NET.onHello)NET.onHello();return}
+ if(d.t==='hello'){NET.fName=String(d.name||'Друг').slice(0,14);NET.fSkin=d.skin||{shirt:'#e53935',hat:'none'};NET.fSword=d.sword||'iron';
+  if(!NET.host&&(NET.fSkin.char||'max')===(S.skin.char||'max')){const free=CHARS.find(c=>c.k!==(NET.fSkin.char||'max'));S.skin.char=free.k;save();toast('🧍 '+esc(NET.fName)+' уже играет за этого героя — ты теперь '+free.n);netSend({t:'hello',name:S.name,skin:S.skin,sword:S.sword||'iron'})}
+  if(G&&G.mp&&G.friend){const pos=G.friend.grp.position.clone();G.scene.remove(G.friend.grp);G.friend=buildHero(NET.fSkin,NET.fSword);G.friend.grp.position.copy(pos);G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0;G.scene.add(G.friend.grp)}
+  if(NET.onHello){const f=NET.onHello;NET.onHello=null;f()}return}
+ if(d.t==='mic'){NET.fMic=!!d.on;toast(d.on?'🎤 '+esc(NET.fName)+' включил микрофон':'🔇 '+esc(NET.fName)+' выключил микрофон');return}
  if(d.t==='start'){toast('👥 '+esc(NET.fName)+' выбрал остров «'+LEVELS[d.i].name+'»');startLevel(d.i,true);return}
  if(d.t==='bye'){toast('👋 '+esc(NET.fName||'Друг')+' вышел из игры');return}
  if(!G||!G.mp)return;
@@ -735,8 +744,15 @@ function onNet(d){if(!d||!d.t)return;
   else{G.killed++;gMsg('⚔ '+NET.fName+' победил моба! '+G.killed+'/'+G.total);if(G.killed>=G.total){const gd=G.mobs.find(x=>x.guard&&x.alive);if(gd&&gd.shield){gd.grp.remove(gd.shield);burst(gd.x,gd.y+gd.size,gd.z,'#5ad1ff',30,6)}setTimeout(()=>{if(G){SFX.win();gMsg('🛡 Щит стража исчез! Победите его!')}},700)}}
   if(G.target===m)cancelFight('Друг уже победил этого моба!');return}
  if(d.t==='win'){gWin(true)}}
+function onCall(call){if(!NET)return;try{NET.inCall&&NET.inCall.close()}catch(e){}NET.inCall=call;call.answer();call.on('stream',rs=>{let a=NET.audio;if(!a){a=new Audio();a.autoplay=true;NET.audio=a}a.srcObject=rs;
+ a.play().then(()=>{}).catch(()=>{const b=document.createElement('button');b.className='btn toast';b.textContent='🔈 Нажми, чтобы слышать '+NET.fName;b.onclick=()=>{a.play().catch(()=>{});b.remove()};document.body.appendChild(b);setTimeout(()=>b.remove(),15000)})})}
+function micBtn(){const b=document.getElementById('micb');if(b){b.textContent=NET&&NET.mic?'🎤 Вкл':'🎤 Выкл';b.style.background=NET&&NET.mic?'#43a047cc':'#6b7085cc'}}
+function voiceToggle(){if(!NET||!NET.open)return;if(NET.mic){NET.mic.getTracks().forEach(t=>t.stop());try{NET.outCall&&NET.outCall.close()}catch(e){}NET.mic=null;NET.outCall=null;netSend({t:'mic',on:0});micBtn();return}
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Этот браузер не поддерживает микрофон');return}
+ navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(st=>{if(!NET||!NET.open){st.getTracks().forEach(t=>t.stop());return}NET.mic=st;NET.outCall=NET.peer.call(NET.remoteId,st);netSend({t:'mic',on:1});micBtn();toast('🎤 Микрофон включён — друг тебя слышит')})
+ .catch(()=>toast('Нет доступа к микрофону. Разреши его в настройках браузера.'))}
 function cancelFight(msg){const h=document.querySelector('#quiz .hint');if(h)h.remove();modalBtn=null;endFight();gMsg(msg)}
-function netBind(conn){NET.conn=conn;conn.on('open',()=>{NET.open=true;conn.send({t:'hello',name:S.name,skin:S.skin,sword:S.sword||'iron'})});
+function netBind(conn){NET.conn=conn;NET.remoteId=conn.peer;conn.on('open',()=>{NET.open=true;conn.send({t:'hello',name:S.name,skin:S.skin,sword:S.sword||'iron'})});
  conn.on('data',onNet);conn.on('close',()=>{const was=NET&&NET.open;if(NET)NET.open=false;if(G)G.mp=false;if(G&&G.friend){G.scene.remove(G.friend.grp);G.friend=null;G.fr=null}if(was){toast('🔌 Связь с другом потеряна');if(!G)screenMap()}});
  conn.on('error',()=>{})}
 function mpCode(){return String(Math.floor(100000+Math.random()*900000))}
@@ -744,13 +760,16 @@ function screenMP(){stopGame();cur=null;
  if(typeof Peer==='undefined'){modal('<h2>Нет связи</h2><p>Для игры вдвоём нужен интернет. Проверь подключение и обнови страницу.</p>',[{t:'На карту',f:screenMap}]);return}
  app.innerHTML=topbar()+`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button class="btn grey" id="back">← Карта</button><h2 class="sec" style="margin:0">👥 Играть вдвоём</h2></div>
  <div id="mpbox"><div class="panel"><p style="font-size:17px;line-height:1.45;margin-top:0">Играйте с другом на одном острове! Каждый решает свои примеры, а мобов, сундуки и стража вы побеждаете вместе.</p>
- <div class="menu" style="margin-top:6px"><button class="btn" id="host" style="background:#e0539a">🏠 Создать игру<span class="sub">получить код для друга</span></button>
+ <p style="font-size:16px;margin:8px 0 6px"><b>Выбери своего героя:</b> <small style="color:#c7cbe0">у друга должен быть другой</small></p>
+ <div class="shop" id="chp">${CHARS.map(c=>`<div class="panel item ${(S.skin.char||'max')===c.k?'on':''}" data-ch="${c.k}"><div class="pv" style="height:110px"><div data-spr="hero" data-sc="6" data-skin='${JSON.stringify({shirt:S.skin.shirt,hat:S.skin.hat,char:c.k})}'></div></div><b>${c.n}</b></div>`).join('')}</div>
+ <div class="menu" style="margin-top:12px"><button class="btn" id="host" style="background:#e0539a">🏠 Создать игру<span class="sub">получить код для друга</span></button>
  <button class="btn blue" id="join">🔗 Присоединиться<span class="sub">ввести код друга</span></button></div></div></div>`;
- bindTop();document.getElementById('back').onclick=()=>{SFX.click();netClose();screenMap()};
+ fillSprites();bindTop();document.getElementById('back').onclick=()=>{SFX.click();netClose();screenMap()};
+ document.querySelectorAll('#chp [data-ch]').forEach(e=>e.onclick=()=>{SFX.click();S.skin.char=e.dataset.ch;save();document.querySelectorAll('#chp [data-ch]').forEach(x=>x.classList.toggle('on',x===e))});
  document.getElementById('host').onclick=()=>{SFX.click();mpHost()};document.getElementById('join').onclick=()=>{SFX.click();mpJoinForm()}}
 function mpBox(h){const b=document.getElementById('mpbox');if(b)b.innerHTML=`<div class="panel" style="text-align:center">${h}</div>`}
 function mpHost(tries){netClose();const code=mpCode();NET={host:true,code,open:false};mpBox('<p style="font-size:17px">Создаю игру…</p>');
- const peer=new Peer('blokograd-'+code,{debug:0});NET.peer=peer;
+ const peer=new Peer('blokograd-'+code,{debug:0});NET.peer=peer;peer.on('call',onCall);
  peer.on('open',()=>{mpBox(`<p style="font-size:17px;margin:0">Скажи другу этот код:</p><div class="px" style="font-size:40px;color:#ffd23f;margin:18px 0;letter-spacing:6px">${code}</div><p class="note">Друг открывает «Играть вдвоём» → «Присоединиться» и вводит код.<br>Ждём друга… ⏳</p>`)});
  peer.on('connection',conn=>{if(NET.conn&&NET.open){conn.close();return}netBind(conn);NET.onHello=()=>{SFX.win();mpPick()}});
  peer.on('error',e=>{if(e.type==='unavailable-id'&&(tries||0)<3)return mpHost((tries||0)+1);mpBox(`<p style="font-size:17px">Не получилось создать игру 😕</p><p class="note">Проверь интернет и попробуй ещё раз.</p><button class="btn" onclick="screenMP()">Ещё раз</button>`)})}
@@ -759,7 +778,7 @@ function mpPick(){if(!document.getElementById('mpbox'))screenMP();const opts=LEV
  document.querySelectorAll('#mpbox [data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;startLevel(i)})}
 function mpJoinForm(){mpBox(`<p style="font-size:17px;margin-top:0">Введи код, который сказал тебе друг:</p><input class="name" id="jc" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off"><div style="height:12px"></div><button class="btn" id="jgo" style="width:100%">Подключиться ▶</button>`);
  const jc=document.getElementById('jc');jc.focus();const go=()=>{const c=jc.value.replace(/\D/g,'');if(c.length!==6){toast('Код — это 6 цифр');return}mpJoin(c)};document.getElementById('jgo').onclick=go;jc.onkeydown=e=>{if(e.key==='Enter')go()}}
-function mpJoin(code){netClose();NET={host:false,code,open:false};mpBox('<p style="font-size:17px">Подключаюсь… ⏳</p>');const peer=new Peer(undefined,{debug:0});NET.peer=peer;
+function mpJoin(code){netClose();NET={host:false,code,open:false};mpBox('<p style="font-size:17px">Подключаюсь… ⏳</p>');const peer=new Peer(undefined,{debug:0});NET.peer=peer;peer.on('call',onCall);
  const fail=()=>mpBox(`<p style="font-size:17px">Не удалось подключиться 😕</p><p class="note">Проверь код и что друг ещё ждёт на экране с кодом.</p><button class="btn" id="again">Ввести код снова</button>`)||null;
  const t=setTimeout(()=>{if(NET&&!NET.open){fail();const a=document.getElementById('again');if(a)a.onclick=mpJoinForm}},15000);
  peer.on('open',()=>{const conn=peer.connect('blokograd-'+code,{reliable:true});netBind(conn);NET.onHello=()=>{clearTimeout(t);SFX.win();mpBox(`<p style="font-size:18px;margin-top:0">✅ Ты в игре у <b>${esc(NET.fName)}</b>!</p><p class="note">Ждём, пока друг выберет остров… ⏳</p>`)}});
