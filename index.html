@@ -746,6 +746,7 @@ function onNet(d){if(!d||!d.t)return;
  if(d.t==='win'){gWin(true)}}
 function onCall(call){if(!NET)return;try{NET.inCall&&NET.inCall.close()}catch(e){}NET.inCall=call;call.answer();call.on('stream',rs=>{let a=NET.audio;if(!a){a=new Audio();a.autoplay=true;NET.audio=a}a.srcObject=rs;
  a.play().then(()=>{}).catch(()=>{const b=document.createElement('button');b.className='btn toast';b.textContent='🔈 Нажми, чтобы слышать '+NET.fName;b.onclick=()=>{a.play().catch(()=>{});b.remove()};document.body.appendChild(b);setTimeout(()=>b.remove(),15000)})})}
+function lmicBind(){const b=document.getElementById('lmic');if(!b)return;const upd=()=>{b.textContent=NET&&NET.mic?'🎤 Микрофон включён (нажми, чтобы выключить)':'🎤 Включить микрофон';b.style.background=NET&&NET.mic?'#43a047':'#6b7085'};upd();b.onclick=()=>{voiceToggle();setTimeout(upd,1500)}}
 function micBtn(){const b=document.getElementById('micb');if(b){b.textContent=NET&&NET.mic?'🎤 Вкл':'🎤 Выкл';b.style.background=NET&&NET.mic?'#43a047cc':'#6b7085cc'}}
 function voiceToggle(){if(!NET||!NET.open)return;if(NET.mic){NET.mic.getTracks().forEach(t=>t.stop());try{NET.outCall&&NET.outCall.close()}catch(e){}NET.mic=null;NET.outCall=null;netSend({t:'mic',on:0});micBtn();return}
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Этот браузер не поддерживает микрофон');return}
@@ -774,14 +775,14 @@ function mpHost(tries){netClose();const code=mpCode();NET={host:true,code,open:f
  peer.on('connection',conn=>{if(NET.conn&&NET.open){conn.close();return}netBind(conn);NET.onHello=()=>{SFX.win();mpPick()}});
  peer.on('error',e=>{if(e.type==='unavailable-id'&&(tries||0)<3)return mpHost((tries||0)+1);mpBox(`<p style="font-size:17px">Не получилось создать игру 😕</p><p class="note">Проверь интернет и попробуй ещё раз.</p><button class="btn" onclick="screenMP()">Ещё раз</button>`)})}
 function mpPick(){if(!document.getElementById('mpbox'))screenMP();const opts=LEVELS.map((l,i)=>i<S.unlocked?`<button class="btn ${l.boss?'red':'blue'}" data-i="${i}">${l.name}<span class="sub">${l.boss?'все таблицы':'× '+l.t}</span></button>`:'').join('');
- mpBox(`<p style="font-size:18px;margin-top:0">✅ <b>${esc(NET.fName)}</b> подключился!</p><p>Выбери остров, на котором будете играть:</p><div class="menu">${opts}</div>`);
- document.querySelectorAll('#mpbox [data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;startLevel(i)})}
+ mpBox(`<p style="font-size:18px;margin-top:0">✅ <b>${esc(NET.fName)}</b> подключился!</p><button class="btn green" id="lmic" style="background:#43a047;margin:4px 0 12px">🎤 Включить микрофон</button><p>Выбери остров, на котором будете играть:</p><div class="menu">${opts}</div>`);
+ document.querySelectorAll('#mpbox [data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;startLevel(i)});lmicBind()}
 function mpJoinForm(){mpBox(`<p style="font-size:17px;margin-top:0">Введи код, который сказал тебе друг:</p><input class="name" id="jc" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off"><div style="height:12px"></div><button class="btn" id="jgo" style="width:100%">Подключиться ▶</button>`);
  const jc=document.getElementById('jc');jc.focus();const go=()=>{const c=jc.value.replace(/\D/g,'');if(c.length!==6){toast('Код — это 6 цифр');return}mpJoin(c)};document.getElementById('jgo').onclick=go;jc.onkeydown=e=>{if(e.key==='Enter')go()}}
 function mpJoin(code){netClose();NET={host:false,code,open:false};mpBox('<p style="font-size:17px">Подключаюсь… ⏳</p>');const peer=new Peer(undefined,{debug:0});NET.peer=peer;peer.on('call',onCall);
  const fail=()=>mpBox(`<p style="font-size:17px">Не удалось подключиться 😕</p><p class="note">Проверь код и что друг ещё ждёт на экране с кодом.</p><button class="btn" id="again">Ввести код снова</button>`)||null;
  const t=setTimeout(()=>{if(NET&&!NET.open){fail();const a=document.getElementById('again');if(a)a.onclick=mpJoinForm}},15000);
- peer.on('open',()=>{const conn=peer.connect('blokograd-'+code,{reliable:true});netBind(conn);NET.onHello=()=>{clearTimeout(t);SFX.win();mpBox(`<p style="font-size:18px;margin-top:0">✅ Ты в игре у <b>${esc(NET.fName)}</b>!</p><p class="note">Ждём, пока друг выберет остров… ⏳</p>`)}});
+ peer.on('open',()=>{const conn=peer.connect('blokograd-'+code,{reliable:true});netBind(conn);NET.onHello=()=>{clearTimeout(t);SFX.win();mpBox(`<p style="font-size:18px;margin-top:0">✅ Ты в игре у <b>${esc(NET.fName)}</b>!</p><button class="btn" id="lmic" style="background:#43a047;margin:4px 0 12px">🎤 Включить микрофон</button><p class="note">Ждём, пока друг выберет остров… ⏳</p>`);lmicBind()}});
  peer.on('error',e=>{clearTimeout(t);fail();const a=document.getElementById('again');if(a)a.onclick=mpJoinForm})}
 
 /* ===================== СТАРТ ===================== */
