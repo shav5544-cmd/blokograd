@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="color-scheme" content="only light">
+<meta name="darkreader-lock">
 <meta name="description" content="Бесплатная 3D-игра: выучи таблицу умножения, сражаясь с мобами в блочном мире!">
 <meta property="og:title" content="Блокоград: Мастер умножения">
 <meta property="og:description" content="Бесплатная 3D-игра в браузере: таблица умножения через приключения в блочном мире. Мобы, сундуки, порталы!">
@@ -15,7 +17,8 @@
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0}
+html,body{margin:0;padding:0;color-scheme:only light;forced-color-adjust:none}
+.g3 canvas{filter:none!important}
 body{font-family:Rubik,system-ui,sans-serif;color:#fff;min-height:100vh;background-color:#1f2333;
  background-image:linear-gradient(#ffffff07 2px,transparent 2px),linear-gradient(90deg,#ffffff07 2px,transparent 2px);background-size:32px 32px;user-select:none}
 #app{max-width:920px;margin:0 auto;padding:12px 12px 40px}
@@ -111,7 +114,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #cmpt{font-family:'Press Start 2P',monospace;font-size:8px;margin-top:4px;white-space:nowrap}
 .combo3{position:absolute;top:60px;left:0;right:0;text-align:center;font-family:'Press Start 2P',monospace;font-size:18px;color:#ffd23f;text-shadow:3px 3px 0 #000;pointer-events:none}
 .msg3{position:absolute;top:34%;left:50%;transform:translateX(-50%);background:#000c;padding:12px 16px;font-weight:900;font-size:18px;display:none;pointer-events:none;text-align:center}
-.banner3{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#000c;border:4px solid #11131b;padding:18px;text-align:center;width:min(560px,92%);pointer-events:none;display:flex;flex-direction:column;gap:10px}
+.banner3{max-height:80%;overflow:hidden;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#000c;border:4px solid #11131b;padding:18px;text-align:center;width:min(560px,92%);pointer-events:none;display:flex;flex-direction:column;gap:10px}
 .banner3 b{font-family:'Press Start 2P',monospace;font-size:18px;color:#ffd23f}.banner3 span{font-size:17px;font-weight:700}.banner3 small{color:#c7cbe0;font-size:14px;line-height:1.4}
 .micb{position:absolute;right:20px;top:140px;font-size:13px!important;padding:9px 11px!important}.g3.touch .micb{top:auto;bottom:172px}.g3.quizon .micb{display:none!important}
 .potb{position:absolute;right:20px;top:92px;font-size:14px!important;padding:10px 12px!important;background:#8a5cd6cc!important}
@@ -546,7 +549,7 @@ function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.ope
  G.portalMesh.rotation.y=Math.PI/2;G.portalMesh.position.set(G.portal.x+.5,8.5,G.portal.z);sc.add(G.portalMesh);drawPortal();
  // герой
  G.hero=buildHero();sc.add(G.hero.grp);
- G.mp=!!(NET&&NET.open);G.netT=0;G.mobT=0;if(G.mp){G.friend=buildHero(NET.fSkin,NET.fSword);sc.add(G.friend.grp);if(NET.fPet){G.fpet=voxelMob(NET.fPet,.55);sc.add(G.fpet);G.fpet.position.set(G.fr.x-1,G.fr.y,G.fr.z)}G.fr={x:G.p.x+1.5,y:G.p.y,z:G.p.z,face:Math.PI/2,mv:0,sw:0};G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0}
+ G.mp=!!(NET&&NET.open);if(G.mp&&!NET.host){G.p.z+=1.6;G.safe.z=G.p.z}G.netT=0;G.mobT=0;if(G.mp){G.friend=buildHero(NET.fSkin,NET.fSword);sc.add(G.friend.grp);if(NET.fPet){G.fpet=voxelMob(NET.fPet,.55);sc.add(G.fpet);G.fpet.position.set(G.fr.x-1,G.fr.y,G.fr.z)}G.fr={x:G.p.x+1.5,y:G.p.y,z:G.p.z,face:Math.PI/2,mv:0,sw:0};G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0}
  if(S.pet&&SPR[S.pet]){G.pet=voxelMob(S.pet,.55);sc.add(G.pet);G.pet.position.set(G.p.x-1,G.p.y,G.p.z)}
  // мобы
  G.mobs.forEach(m=>{m.grp=voxelMob(m.type,m.size);sc.add(m.grp);if(m.guard){m.shield=new THREE.Mesh(new THREE.SphereGeometry(m.size*.85,20,14),new THREE.MeshBasicMaterial({color:'#5ad1ff',transparent:true,opacity:.28,depthWrite:false}));m.shield.position.y=m.size*.5;m.grp.add(m.shield)}m.x=m.hx;m.z=m.hz;m.y=groundY(m.x,m.z);m.tx=m.x;m.tz=m.z;m.nx=m.x;m.nz=m.z;m.nf=0;m.t=Math.random()*5;m.alive=true;m.maxhp=m.hp;m.flash=0;m.r=.45*m.size;m.wait=0})
@@ -560,7 +563,7 @@ function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.ope
  G.partGeo=new THREE.BoxGeometry(.12,.12,.12);
  // ввод
  const el=R.domElement;let drag=null;
- el.addEventListener('pointerdown',e=>{if(!G||G.state!=='play')return;try{el.setPointerCapture(e.pointerId)}catch(_){}const r=el.getBoundingClientRect();
+ el.addEventListener('pointerdown',e=>{if(!G||G.state!=='play')return;if(G.banner>.4)G.banner=.4;try{el.setPointerCapture(e.pointerId)}catch(_){}const r=el.getBoundingClientRect();
   if(e.pointerType!=='mouse'&&e.clientX-r.left<r.width*.45&&!G.joy){G.joy={id:e.pointerId,ox:e.clientX,oy:e.clientY,x:0,y:0}}else if(!drag)drag={id:e.pointerId,x:e.clientX,y:e.clientY}});
  el.addEventListener('pointermove',e=>{if(!G)return;if(G.joy&&e.pointerId===G.joy.id){let dx=e.clientX-G.joy.ox,dy=e.clientY-G.joy.oy;const l=Math.hypot(dx,dy);if(l>50){dx*=50/l;dy*=50/l}G.joy.x=dx/50;G.joy.y=dy/50;
    document.getElementById('knob').style.transform=`translate(${dx}px,${dy}px)`}
@@ -578,7 +581,7 @@ function groundY(x,z){const xi=Math.floor(x),zi=Math.floor(z);if(xi<0||zi<0||xi>
 function solidB(x,y,z){if(x<0||z<0||x>=SX||z>=SZ)return true;if(y<0)return !G.sky;if(y>=SY)return false;const v=G.W[bid(x,y,z)];return v!==0&&v!==12}
 function collides(x,y,z){const r=.3;for(let bx=Math.floor(x-r);bx<=Math.floor(x+r-1e-6);bx++)for(let bz=Math.floor(z-r);bz<=Math.floor(z+r-1e-6);bz++)for(let by=Math.floor(y);by<=Math.floor(y+1.75-1e-6);by++)if(solidB(bx,by,bz))return true;return false}
 const KMAP={KeyW:'f',ArrowUp:'f',KeyS:'b',ArrowDown:'b',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r',Space:'j'};
-document.addEventListener('keydown',e=>{if(!G||G.state!=='play'||modalBtn)return;if(e.code==='KeyQ'){usePotion();return}const k=KMAP[e.code];if(!k)return;e.preventDefault();if(k==='j'&&!G.keys.j)G.jumpBuf=.15;G.keys[k]=1});
+document.addEventListener('keydown',e=>{if(!G||G.state!=='play'||modalBtn)return;if(G.banner>.4)G.banner=.4;if(e.code==='KeyQ'){usePotion();return}const k=KMAP[e.code];if(!k)return;e.preventDefault();if(k==='j'&&!G.keys.j)G.jumpBuf=.15;G.keys[k]=1});
 document.addEventListener('keyup',e=>{if(!G)return;const k=KMAP[e.code];if(k)G.keys[k]=0});
 window.addEventListener('blur',()=>{if(G)G.keys={}});
 function loop(ts){if(!G||G.dead)return;const dt=G.lt?Math.min(.05,(ts-G.lt)/1000):0;G.lt=ts;update(dt);if(!G||G.dead)return;camUpdate();G.renderer.render(G.scene,G.cam);G.raf=requestAnimationFrame(loop)}
