@@ -123,6 +123,12 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .g3.quizon .joy,.g3.quizon .jbtn{display:none}
 .quiz3{position:absolute;left:0;right:0;bottom:0;background:#1f2333f0;border-top:4px solid #11131b;padding:10px;text-align:center}
 .quiz3[hidden]{display:none}
+.pethint{position:absolute;left:8px;right:8px;bottom:calc(100% + 8px);display:flex;gap:10px;align-items:flex-end;pointer-events:none;animation:tin .3s}
+.pethint[hidden]{display:none}
+.pethint .bub{background:#fffbe8;color:#2b3044;border:4px solid #11131b;padding:10px 12px;font-size:16px;line-height:1.35;text-align:left;box-shadow:0 4px 0 #0006;max-width:560px}
+.pethint .bub small{color:#8a5cd6;font-weight:900}
+.pethint .grid{margin-top:6px;line-height:0;display:block}.pethint .grid div{display:block;white-space:nowrap}.pethint .grid i{display:inline-block;width:12px;height:12px;margin:1px;background:#2f8de4;border:1px solid #11131b}
+.pethint .stone{display:inline-block;background:#5d6270;color:#fff;font-family:'Press Start 2P',monospace;font-size:13px;padding:7px 9px;margin:2px;border:3px solid #11131b}
 .quiz3 .lbl{font-weight:900;font-size:17px;color:#ffb547}.quiz3 .q{font-size:clamp(24px,6vw,40px);padding:4px 0}
 .g3.shake{animation:shk .35s}
 /* mine */
@@ -493,7 +499,7 @@ function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.ope
  <div class="banner3" id="ban"><b>${lv.name}</b><span>${lv.boss?'Все таблицы! Победи всех мобов — и щит Тёмного Голема исчезнет':'Таблица на '+lv.t+'. Победи всех мобов — тогда исчезнет щит стража портала!'}</span>
  <small>${touch?'Левый палец — идти · Правый — крутить камеру · ▲ — прыжок':'W A S D или стрелки — идти · Пробел — прыжок<br>Зажми мышь и двигай — поворот камеры · Колесо — приблизить'}</small><small>Жёлтая стрелка наверху показывает, где ближайший моб</small></div>
  <button class="btn micb" id="micb" style="display:${NET&&NET.open?"block":"none"}">🎤 Выкл</button><button class="btn potb" id="potb">🧪 <span id="potn">${S.potions||0}</span></button><div class="joy" id="joy"><i id="knob"></i></div><button class="btn jbtn" id="jbtn">▲</button>
- <div id="quiz" class="quiz3" hidden><div class="lbl" id="qlbl"></div><div class="q" id="q"></div><div class="fb" id="fb"></div>
+ <div id="quiz" class="quiz3" hidden><div id="pethint" class="pethint" hidden></div><div class="lbl" id="qlbl"></div><div class="q" id="q"></div><div class="fb" id="fb"></div>
  <div class="pad2">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button class="btn" data-d="${n}">${n}</button>`).join('')}<button class="btn del" data-d="del">⌫</button><button class="btn ok" data-d="ok">✔</button></div></div></div>`;
  bindTop();document.getElementById('back').onclick=()=>{SFX.click();screenMap()};
  app.querySelectorAll('.pad2 .btn').forEach(b=>b.onclick=()=>{if(!cur)return;const d=b.dataset.d;if(d==='del')cur.back();else if(d==='ok')cur.ok();else cur.press(d)});
@@ -540,7 +546,7 @@ function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.ope
  G.portalMesh.rotation.y=Math.PI/2;G.portalMesh.position.set(G.portal.x+.5,8.5,G.portal.z);sc.add(G.portalMesh);drawPortal();
  // герой
  G.hero=buildHero();sc.add(G.hero.grp);
- G.mp=!!(NET&&NET.open);G.netT=0;G.mobT=0;if(G.mp){G.friend=buildHero(NET.fSkin,NET.fSword);sc.add(G.friend.grp);G.fr={x:G.p.x+1.5,y:G.p.y,z:G.p.z,face:Math.PI/2,mv:0,sw:0};G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0}
+ G.mp=!!(NET&&NET.open);G.netT=0;G.mobT=0;if(G.mp){G.friend=buildHero(NET.fSkin,NET.fSword);sc.add(G.friend.grp);if(NET.fPet){G.fpet=voxelMob(NET.fPet,.55);sc.add(G.fpet);G.fpet.position.set(G.fr.x-1,G.fr.y,G.fr.z)}G.fr={x:G.p.x+1.5,y:G.p.y,z:G.p.z,face:Math.PI/2,mv:0,sw:0};G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0}
  if(S.pet&&SPR[S.pet]){G.pet=voxelMob(S.pet,.55);sc.add(G.pet);G.pet.position.set(G.p.x-1,G.p.y,G.p.z)}
  // мобы
  G.mobs.forEach(m=>{m.grp=voxelMob(m.type,m.size);sc.add(m.grp);if(m.guard){m.shield=new THREE.Mesh(new THREE.SphereGeometry(m.size*.85,20,14),new THREE.MeshBasicMaterial({color:'#5ad1ff',transparent:true,opacity:.28,depthWrite:false}));m.shield.position.y=m.size*.5;m.grp.add(m.shield)}m.x=m.hx;m.z=m.hz;m.y=groundY(m.x,m.z);m.tx=m.x;m.tz=m.z;m.nx=m.x;m.nz=m.z;m.nf=0;m.t=Math.random()*5;m.alive=true;m.maxhp=m.hp;m.flash=0;m.r=.45*m.size;m.wait=0})
@@ -579,7 +585,7 @@ function loop(ts){if(!G||G.dead)return;const dt=G.lt?Math.min(.05,(ts-G.lt)/1000
 const lerpA=(a,b,t)=>{let d=((b-a+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;return a+d*t};
 function burst(x,y,z,col,n,sp=4){const mat=new THREE.MeshLambertMaterial({color:col});for(let k=0;k<n;k++){const m=new THREE.Mesh(G.partGeo,mat);m.position.set(x,y,z);G.scene.add(m);
  G.parts.push({m,vx:(Math.random()-.5)*sp,vy:Math.random()*sp*.9+1,vz:(Math.random()-.5)*sp,life:.7+Math.random()*.5})}}
-function update(dt){G.t+=dt;const p=G.p,k=G.keys;
+function update(dt){G.t+=dt;if(G.petWait>0&&G.state==='quiz'&&performance.now()>=G.petWait){G.petWait=0;if(G.petShow)G.petShow()}const p=G.p,k=G.keys;
  G.parts.forEach(q=>{q.vy-=14*dt;q.m.position.x+=q.vx*dt;q.m.position.y+=q.vy*dt;q.m.position.z+=q.vz*dt;q.m.rotation.x+=dt*5;q.life-=dt;if(q.life<=0)G.scene.remove(q.m)});G.parts=G.parts.filter(q=>q.life>0);
  if(G.banner>0){G.banner-=dt;const b=document.getElementById('ban');if(b){b.style.opacity=Math.min(1,G.banner);if(G.banner<=0)b.style.display='none'}}
  if(G.msgT>0){G.msgT-=dt;if(G.msgT<=0)document.getElementById('msg').style.display='none'}
@@ -631,16 +637,38 @@ function update(dt){G.t+=dt;const p=G.p,k=G.keys;
  H.legL.rotation.x=sw;H.legR.rotation.x=-sw;H.armL.rotation.x=-sw*.8;
  if(p.swing>0){const t=1-p.swing/.4;H.armR.rotation.x=-Math.PI*.55-Math.sin(t*Math.PI)*1.3+t*1.6;H.sword.visible=true}else{H.armR.rotation.x=sw*.8;H.sword.visible=G.state==='quiz'}
  if(G.state==='quiz'&&p.swing<=0)H.armR.rotation.x=-.5;
- if(!p.onGround){H.armL.rotation.z=.4;H.armR.rotation.z=-.4}else{H.armL.rotation.z=0;H.armR.rotation.z=0}
+ p.air=(p.air||0)+((!p.onGround&&G.state==='play'?1:0)-(p.air||0))*Math.min(1,dt*12);armsUp(H,p.air,p.swing>0)
  if(G.torch)G.torch.position.set(p.x,p.y+3,p.z);
- if(G.pet){const pp=G.pet.position,bx=p.x-Math.sin(p.face)*1.3,bz=p.z-Math.cos(p.face)*1.3,d=Math.hypot(bx-pp.x,bz-pp.z);if(d>.15){const k=Math.min(1,dt*(d>4?6:3));pp.x+=(bx-pp.x)*k;pp.z+=(bz-pp.z)*k;G.pet.rotation.y=Math.atan2(bx-pp.x,bz-pp.z)}
-  const gy=Math.max(groundY(pp.x,pp.z),p.y-1.5);pp.y+=(gy+Math.abs(Math.sin(G.t*7))*(d>.3?.3:.08)-pp.y)*Math.min(1,dt*10);if(d>12){pp.x=p.x;pp.z=p.z;pp.y=p.y}}
+ petFollow(G.pet,p.x,p.y,p.z,p.face,dt);if(G.fpet&&G.friend){const fp=G.friend.grp.position;petFollow(G.fpet,fp.x,fp.y,fp.z,G.fr.face,dt)}
  netTick(dt);friendTick(dt);fxTick(dt);
  hudUpdate()}
 function camUpdate(){const p=G.p,tx=p.x,ty=p.y+1.4,tz=p.z;let d=G.dist;const ox=Math.sin(G.yaw)*Math.cos(G.pitch),oy=Math.sin(G.pitch),oz=Math.cos(G.yaw)*Math.cos(G.pitch);
  for(let s=.6;s<=d;s+=.2){const X=Math.floor(tx+ox*s),Y=Math.floor(ty+oy*s),Z=Math.floor(tz+oz*s);if(X>=0&&Z>=0&&X<SX&&Z<SZ&&Y>=0&&Y<SY&&G.W[bid(X,Y,Z)]){d=Math.max(1.3,s-.3);break}}
  G.cam.position.set(tx+ox*d,ty+oy*d,tz+oz*d);G.cam.lookAt(tx,ty,tz)}
 function usePotion(){if(!G||G.state!=='play')return;if(!(S.potions>0)){gMsg('Нет зелий — купи в магазине за 25 💎');return}if(G.hearts>=5){gMsg('Сердца и так полные ❤️');return}S.potions--;save();G.hearts++;document.getElementById('potn').textContent=S.potions;SFX.combo();burst(G.p.x,G.p.y+1,G.p.z,'#ff4d5e',14,3);gMsg('🧪 +1 ❤')}
+function petFollow(pet,px,py,pz,face,dt){if(!pet)return;const pp=pet.position,bx=px-Math.sin(face)*1.3,bz=pz-Math.cos(face)*1.3,d=Math.hypot(bx-pp.x,bz-pp.z);
+ if(d>.15){const k=Math.min(1,dt*(d>4?6:3));pp.x+=(bx-pp.x)*k;pp.z+=(bz-pp.z)*k;pet.rotation.y=Math.atan2(bx-pp.x,bz-pp.z)}
+ const gy=Math.max(groundY(pp.x,pp.z),py-1.5);pp.y+=(gy+Math.abs(Math.sin(G.t*7))*(d>.3?.3:.08)-pp.y)*Math.min(1,dt*10);if(d>12){pp.x=px;pp.z=pz;pp.y=py}}
+const PET_HINT={
+ slime:(a,b)=>{const x=Math.max(a,b),y=Math.min(a,b);const st=[];for(let k=1;k<Math.min(y,4);k++)st.push(k*x);return`<b>Буль-буль!</b> Давай прыгать по ${x}! ${st.length?st.join('… ')+'…':''} Всего нужно <b>${y}</b> прыжков — где приземлишься?`},
+ mushroom:(a,b)=>{const x=Math.max(a,b),y=Math.min(a,b);return y<=2?`<b>Тсс…</b> ${x}×2 — это ${x} и ещё ${x}. Сложи их!`:`<b>Тсс, Грибень шепчет…</b> Разбей на части: ${x}×${y} = ${x}×${y-1} + ${x}. А сколько будет ${x}×${y-1}? Потом добавь ещё ${x}!`},
+ cactus:(a,b)=>{const x=Math.max(a,b),y=Math.min(a,b);return y>=6?`<b>Колючая подсказка!</b> ${x}×10 = ${x*10}. А тебе нужно не 10, а ${y} — на ${10-y} раза меньше. Отними ${10-y}×${x} от ${x*10}!`:`<b>Колючая подсказка!</b> ${x}×${y} — это ${y} раза по ${x}. Сложи столбиком: ${Array(y).fill(x).join(' + ')}`},
+ snow:(a,b)=>{const ev=[a,b].find(v=>v%2===0&&v>2);if(ev){const o=ev===a?b:a;return`<b>Снеговик лепит два кома!</b> Посчитай ${o}×${ev/2} — это первый ком. Второй такой же! Сложи два одинаковых кома ☃️`}return`<b>Снеговик дрожит…</b> Начни с ${a}×${b-1} и добавь ещё ${a}. Ты справишься!`},
+ snake:(a,b)=>a===b?`<b>Сссс…</b> Это квадрат! ${a} рядов по ${a}. Вспомни ${a}×${a-1} и добавь ${a}…`:`<b>Сссс… переверни пример!</b> ${a}×${b} — это то же самое, что ${b}×${a}. Может, так тебе легче вспомнить? 🐍`,
+ eye:(a,b)=>{let g='';for(let r=0;r<a;r++){g+='<div>';for(let c=0;c<b;c++)g+='<i></i>';g+='</div>'}return`<b>Глаз всё видит!</b> Вот ${a} рядов по ${b} блоков. Посчитай их — можно по рядам: ${b}, потом ещё ${b}…<div class="grid">${g}</div>`},
+ lava:(a,b)=>{const r=a*b,lo=Math.max(0,r-1-Math.floor(Math.random()*8));return`<b>Горячо-горячо!</b> 🔥 Ответ живёт между <b>${lo}</b> и <b>${lo+10}</b>, и он ${r%2?'нечётный':'чётный'}. Подумай, кто из соседей подходит!`},
+ dragon:(a,b)=>{const x=Math.max(a,b),y=Math.min(a,b);if(x===9||y===9){const n=x===9?y:x;return`<b>Дракончик знает секрет девятки!</b> Вытяни 10 пальцев и загни ${n}-й. Пальцы слева — десятки, справа — единицы ✋`}return y>=5?`<b>Фууух!</b> 🐉 Дракончик считает пятёрками: сначала ${x}×5 (это половина от ${x}×10)${y>5?`, потом добавь ${x}×${y-5}`:''}.`:y>=3?`<b>Фууух!</b> 🐉 Сначала ${x}×2, потом добавь ${x}×${y-2}.`:`<b>Фууух!</b> 🐉 ×${y} — это просто ${x} и ещё ${x}!`},
+ golem:(a,b)=>{const r=a*b,opts=new Set([r]);for(const d of[a,b,-a,-b,10,-1,1])if(opts.size<3&&r+d>0)opts.add(r+d);const arr=[...opts].sort(()=>Math.random()-.5);return`<b>Голем поднимает три камня…</b> Только на одном — правильный ответ: ${arr.map(v=>`<span class="stone">${v}</span>`).join(' ')}`}};
+const PET_NAMES={slime:'Мини-слизень',mushroom:'Мини-грибень',cactus:'Мини-кактусоид',snow:'Мини-снеговик',snake:'Мини-лиана',eye:'Мини-глаз',lava:'Мини-лавовый куб',dragon:'Мини-дракончик',golem:'Мини-Голем'};
+function petHintClear(){if(G){G.petWait=0}const h=document.getElementById('pethint');if(h){h.hidden=true;h.innerHTML=''}}
+function petHintArm(){petHintClear();if(!G||!S.pet||!PET_HINT[S.pet]||G.target&&G.target.chest&&false)return;const q=G.q;
+ G.petQ=q;G.petWait=performance.now()+5000;G.petShow=()=>{if(!G||G.state!=='quiz'||G.q!==q||G.busy)return;const h=document.getElementById('pethint');if(!h)return;
+  h.innerHTML=`<div data-spr="${S.pet}" data-sc="4"></div><div class="bub"><small>${PET_NAMES[S.pet]}:</small><br>${PET_HINT[S.pet](q[0],q[1])}</div>`;fillSprites(h);h.hidden=false;beep(880,.08,'triangle',.05);beep(1100,.1,'triangle',.05,.1);
+  }}
+function armsUp(H,a,swinging){if(a<.01){H.armL.rotation.z=0;if(!swinging)H.armR.rotation.z=0;return}
+ const up=-2.75;H.armL.rotation.x+=(up-H.armL.rotation.x)*a;H.armL.rotation.z=.35*a;
+ if(!swinging){H.armR.rotation.x+=(up-H.armR.rotation.x)*a;H.armR.rotation.z=-.35*a}
+ H.legL.rotation.x=H.legL.rotation.x*(1-a)+.45*a;H.legR.rotation.x=H.legR.rotation.x*(1-a)-.25*a}
 function fxTick(dt){if(!G.fxPts)return;const a=G.fxPts.geometry.attributes.position,v=a.array,p=G.p,k=G.fx;for(let i=0;i<v.length;i+=3){
  if(k==='snow'){v[i+1]-=dt*1.6;v[i]+=Math.sin(G.t+i)*dt*.3}else if(k==='embers'){v[i+1]+=dt*1.3;v[i]+=Math.sin(G.t*2+i)*dt*.4}else{v[i+1]+=dt*.25;v[i]+=Math.sin(G.t*.7+i)*dt*.3;v[i+2]+=Math.cos(G.t*.6+i)*dt*.3}
  if(v[i+1]<p.y-4)v[i+1]=p.y+14;if(v[i+1]>p.y+14)v[i+1]=p.y-4;if(v[i]<p.x-17)v[i]+=34;if(v[i]>p.x+17)v[i]-=34;if(v[i+2]<p.z-17)v[i+2]+=34;if(v[i+2]>p.z+17)v[i+2]-=34}a.needsUpdate=true}
@@ -657,14 +685,14 @@ function showQuiz(on){document.getElementById('quiz').hidden=!on;document.getEle
 function startFight(t){G.state='quiz';G.target=t;G.keys={};G.joy=null;const p=G.p;p.vx=p.vz=0;p.face=Math.atan2(t.x-p.x,t.z-p.z);if(!t.chest)t.face=Math.atan2(p.x-t.x,p.z-t.z);
  G.yaw=lerpA(G.yaw,p.face+Math.PI+.5,1);SFX.click();showQuiz(true);
  cur={press:d=>{if(G.busy||G.input.length>=3)return;SFX.click();G.input+=d;gq()},back:()=>{if(G.busy)return;G.input=G.input.slice(0,-1);gq()},ok:gAnswer};ask()}
-function ask(){G.input='';G.busy=false;const r=G.retry.find(x=>x.n<=0);G.retry.forEach(x=>x.n--);
+function ask(){G.input='';G.busy=false;petHintClear();const r=G.retry.find(x=>x.n<=0);G.retry.forEach(x=>x.n--);
  if(r){G.retry=G.retry.filter(x=>x!==r);G.q=Math.random()<.5?r.q:[r.q[1],r.q[0]]}else G.q=pick(G.pool,G.last);G.last=key(G.q[0],G.q[1]);
  const t=G.target,nm=t.chest?'':(t.golem?'Тёмный Голем':LEVELS.find(l=>l.mob===t.type).mobName);
  document.getElementById('qlbl').innerHTML=t.chest?'🎁 Сундук! Реши пример, чтобы открыть:':t.guard?`⚔️ ${t.golem?'':'Страж — '}${nm}! Удар ${t.maxhp-t.hp+1} из ${t.maxhp}:`:`⚔️ ${nm}! Реши пример, чтобы ударить:`;
- document.getElementById('fb').textContent='';gq();
+ document.getElementById('fb').textContent='';gq();petHintArm();
  if(!reminded&&Date.now()-sessionStart>20*60*1000){reminded=true;modal(`<h2>Ты играешь уже 20 минут!</h2><p>Отличная работа 💪 Мозгу и глазам нужен отдых. Сделай перерыв 5 минут — мобы подождут!</p>`,[{t:'Хорошо!'}])}}
 function gq(){document.getElementById('q').innerHTML=`${G.q[0]} × ${G.q[1]} = <span class="ans">${G.input||'?'}</span>`}
-function gAnswer(){if(G.busy||G.input==='')return;G.busy=true;const[a,b]=G.q,ok=+G.input===a*b,t=G.target,fb=document.getElementById('fb');record(a,b,ok);
+function gAnswer(){if(G.busy||G.input==='')return;petHintClear();G.busy=true;const[a,b]=G.q,ok=+G.input===a*b,t=G.target,fb=document.getElementById('fb');record(a,b,ok);
  if(ok){G.combo++;if(G.combo>S.bestCombo)S.bestCombo=G.combo;if(G.combo>=5)unlockAch('combo5');if(G.combo>=15)unlockAch('combo15');
   const gain=(t.chest?5:t.big?3:1)*(G.combo>=3?2:1);S.crystals+=gain;G.got+=gain;save();G.combo>=3&&G.combo%3===0?SFX.combo():SFX.ok();G.p.swing=.4;
   const praise=['Верно!','Отлично!','Супер!','Круто!','Точно!','Мощно!'];fb.className='fb ok';fb.textContent=praise[Math.floor(Math.random()*praise.length)]+' +'+gain+' 💎';
@@ -679,7 +707,7 @@ function gAnswer(){if(G.busy||G.input==='')return;G.busy=true;const[a,b]=G.q,ok=
   hd.innerHTML=`<div>${t.chest?'Сундук не открылся!':'Ой! Моб ударил тебя −1 ❤'} Правильный ответ:</div><div class="r">${a} × ${b} = ${a*b}</div><div class="tip">💡 ${hint(a,b)}</div><button class="btn" id="hok">Понятно ▶</button>`;qz.appendChild(hd);
   const go=()=>{hd.remove();modalBtn=null;if(!G)return;if(G.hearts<=0)return gLose();if(t.chest){t.cool=2.5;endFight()}else ask()};
   document.getElementById('hok').onclick=()=>{SFX.click();go()};modalBtn=document.getElementById('hok')}}
-function endFight(){if(!G)return;G.state='play';G.target=null;G.p.inv=1;cur=null;showQuiz(false)}
+function endFight(){if(!G)return;petHintClear();G.state='play';G.target=null;G.p.inv=1;cur=null;showQuiz(false)}
 function gWin(fromNet){if(!G||G.state==='end')return;if(!fromNet)netSend({t:'win'});G.state='end';showQuiz(false);cur=null;const i=G.i,lv=G.lv,openC=G.chests.filter(c=>c.open).length,all=openC>=G.chests.length,perfect=G.hearts===5&&!G.died,st=1+(all?1:0)+(perfect?1:0);
  S.stars[i]=Math.max(S.stars[i]||0,st);const bonus=lv.boss?50:st*5;S.crystals+=bonus;S.wins=(S.wins||0)+1;const newIsland=i+1<LEVELS.length&&S.unlocked<=i+1;if(newIsland)S.unlocked=i+2;save();
  unlockAch('first');if(perfect)unlockAch('perfect');if(lv.boss)unlockAch('boss');checkAch();SFX.win();const got=G.got;
@@ -810,22 +838,22 @@ function netClose(){if(NET){try{NET.mic&&NET.mic.getTracks().forEach(t=>t.stop()
 function nameTag(t){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,8,256,48);g.fillStyle='#ffd23f';g.font='bold 34px Rubik, sans-serif';g.textAlign='center';g.fillText(t,128,44);
  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));sp.scale.set(1.2,.3,1);sp.position.y=2.15;return sp}
 function netTick(dt){if(!G||!G.mp)return;G.netT-=dt;G.mobT-=dt;const p=G.p;
- if(G.netT<=0){G.netT=.09;netSend({t:'pos',x:+p.x.toFixed(2),y:+p.y.toFixed(2),z:+p.z.toFixed(2),f:+p.face.toFixed(2),mv:Math.hypot(p.vx,p.vz)>.1?1:0,sw:p.swing>0?1:0})}
+ if(G.netT<=0){G.netT=.09;netSend({t:'pos',x:+p.x.toFixed(2),y:+p.y.toFixed(2),z:+p.z.toFixed(2),f:+p.face.toFixed(2),mv:Math.hypot(p.vx,p.vz)>.1?1:0,sw:p.swing>0?1:0,g:p.onGround?1:0})}
  if(NET.host&&G.mobT<=0){G.mobT=.15;netSend({t:'mobs',a:G.mobs.map(m=>[+m.x.toFixed(2),+m.z.toFixed(2),+(m.face||0).toFixed(2)])})}}
 function friendTick(dt){if(!G||!G.mp||!G.friend)return;const F=G.friend,f=G.fr,g=F.grp.position,k=Math.min(1,dt*10);
  g.x+=(f.x-g.x)*k;g.y+=(f.y-g.y)*k;g.z+=(f.z-g.z)*k;F.grp.rotation.y=lerpA(F.grp.rotation.y,f.face,k);
  if(f.mv)F.phase+=dt*10;else F.phase*=.85;const sw=Math.sin(F.phase)*.75;F.legL.rotation.x=sw;F.legR.rotation.x=-sw;F.armL.rotation.x=-sw*.8;
- F.armR.rotation.x=f.sw?-1.6:sw*.8;F.sword.visible=!!f.sw}
+ F.armR.rotation.x=f.sw?-1.6:sw*.8;F.sword.visible=!!f.sw;F.air=(F.air||0)+((f.g===0?1:0)-(F.air||0))*Math.min(1,dt*12);armsUp(F,F.air,f.sw)}
 function onNet(d){if(!d||!d.t)return;
- if(d.t==='hello'){NET.fName=String(d.name||'Друг').slice(0,14);NET.fSkin=d.skin||{shirt:'#e53935',hat:'none'};NET.fSword=d.sword||'iron';
-  if(!NET.host&&(NET.fSkin.char||'max')===(S.skin.char||'max')){const free=CHARS.find(c=>c.k!==(NET.fSkin.char||'max'));S.skin.char=free.k;save();toast('🧍 '+esc(NET.fName)+' уже играет за этого героя — ты теперь '+free.n);netSend({t:'hello',name:S.name,skin:S.skin,sword:S.sword||'iron'})}
-  if(G&&G.mp&&G.friend){const pos=G.friend.grp.position.clone();G.scene.remove(G.friend.grp);G.friend=buildHero(NET.fSkin,NET.fSword);G.friend.grp.position.copy(pos);G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0;G.scene.add(G.friend.grp)}
+ if(d.t==='hello'){NET.fName=String(d.name||'Друг').slice(0,14);NET.fSkin=d.skin||{shirt:'#e53935',hat:'none'};NET.fSword=d.sword||'iron';NET.fPet=SPR[d.pet]?d.pet:null;
+  if(!NET.host&&(NET.fSkin.char||'max')===(S.skin.char||'max')){const free=CHARS.find(c=>c.k!==(NET.fSkin.char||'max'));S.skin.char=free.k;save();toast('🧍 '+esc(NET.fName)+' уже играет за этого героя — ты теперь '+free.n);netSend({t:'hello',name:S.name,skin:S.skin,sword:S.sword||'iron',pet:S.pet||null})}
+  if(G&&G.mp&&G.friend){const pos=G.friend.grp.position.clone();G.scene.remove(G.friend.grp);G.friend=buildHero(NET.fSkin,NET.fSword);G.friend.grp.position.copy(pos);G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0;G.scene.add(G.friend.grp);if(G.fpet){G.scene.remove(G.fpet);G.fpet=null}if(NET.fPet){G.fpet=voxelMob(NET.fPet,.55);G.fpet.position.copy(pos);G.scene.add(G.fpet)}}
   if(NET.onHello){const f=NET.onHello;NET.onHello=null;f()}return}
  if(d.t==='mic'){NET.fMic=!!d.on;toast(d.on?'🎤 '+esc(NET.fName)+' включил микрофон':'🔇 '+esc(NET.fName)+' выключил микрофон');return}
  if(d.t==='start'){toast('👥 '+esc(NET.fName)+' выбрал остров «'+LEVELS[d.i].name+'»');startLevel(d.i,true);return}
  if(d.t==='bye'){toast('👋 '+esc(NET.fName||'Друг')+' вышел из игры');return}
  if(!G||!G.mp)return;
- if(d.t==='pos'){Object.assign(G.fr,{x:d.x,y:d.y,z:d.z,face:d.f,mv:d.mv,sw:d.sw});return}
+ if(d.t==='pos'){Object.assign(G.fr,{x:d.x,y:d.y,z:d.z,face:d.f,mv:d.mv,sw:d.sw,g:d.g});return}
  if(d.t==='mobs'&&!NET.host){d.a.forEach((v,i)=>{const m=G.mobs[i];if(m){m.nx=v[0];m.nz=v[1];m.nf=v[2]}});return}
  if(d.t==='gem'){const g=G.gems[d.i];if(g&&!g.got){g.got=true;G.scene.remove(g.m)}return}
  if(d.t==='chest'){const c=G.chests[d.i];if(c&&!c.open){c.open=true;c.lock.visible=false;burst(c.x,c.y+.6,c.z,'#ffd23f',10)}if(G.target===c)cancelFight('Друг уже открыл этот сундук!');return}
@@ -844,8 +872,8 @@ function voiceToggle(){if(!NET||!NET.open)return;if(NET.mic){NET.mic.getTracks()
  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(st=>{if(!NET||!NET.open){st.getTracks().forEach(t=>t.stop());return}NET.mic=st;NET.outCall=NET.peer.call(NET.remoteId,st);netSend({t:'mic',on:1});micBtn();toast('🎤 Микрофон включён — друг тебя слышит')})
  .catch(()=>toast('Нет доступа к микрофону. Разреши его в настройках браузера.'))}
 function cancelFight(msg){const h=document.querySelector('#quiz .hint');if(h)h.remove();modalBtn=null;endFight();gMsg(msg)}
-function netBind(conn){NET.conn=conn;NET.remoteId=conn.peer;conn.on('open',()=>{NET.open=true;conn.send({t:'hello',name:S.name,skin:S.skin,sword:S.sword||'iron'})});
- conn.on('data',onNet);conn.on('close',()=>{const was=NET&&NET.open;if(NET)NET.open=false;if(G)G.mp=false;if(G&&G.friend){G.scene.remove(G.friend.grp);G.friend=null;G.fr=null}if(was){toast('🔌 Связь с другом потеряна');if(!G)screenMap()}});
+function netBind(conn){NET.conn=conn;NET.remoteId=conn.peer;conn.on('open',()=>{NET.open=true;conn.send({t:'hello',name:S.name,skin:S.skin,sword:S.sword||'iron',pet:S.pet||null})});
+ conn.on('data',onNet);conn.on('close',()=>{const was=NET&&NET.open;if(NET)NET.open=false;if(G)G.mp=false;if(G&&G.friend){G.scene.remove(G.friend.grp);G.friend=null;G.fr=null}if(G&&G.fpet){G.scene.remove(G.fpet);G.fpet=null}if(was){toast('🔌 Связь с другом потеряна');if(!G)screenMap()}});
  conn.on('error',()=>{})}
 function mpCode(){return String(Math.floor(100000+Math.random()*900000))}
 function screenMP(){stopGame();cur=null;
