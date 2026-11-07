@@ -362,7 +362,7 @@ function genWorld(i){const lv=LEVELS[i],bm=B3[lv.mob],R=rng(5000+i*131),n1=vnois
  for(let k=0;k<2000&&mobs.length<n;k++){const x=Math.floor(R()*SX),z=Math.floor(R()*SZ);if(!okSpot(x,z,9)||mobs.some(m=>Math.hypot(m.hx-x,m.hz-z)<7))continue;
   mobs.push({type:types[mobs.length%types.length],hx:x+.5,hz:z+.5,size:1,hp:1,range:4})}
  mobs.push({type:lv.boss?'golem':lv.mob,hx:px-4.5,hz:pz+.5,size:lv.boss?2.4:1.7,hp:lv.boss?8:3,guard:true,big:true,golem:!!lv.boss,range:lv.boss?6:2});
- const chests=[];for(let k=0;k<2000&&chests.length<3;k++){const x=Math.floor(R()*SX),z=Math.floor(R()*SZ);if(!okSpot(x,z,6)||mobs.some(m=>Math.hypot(m.hx-x,m.hz-z)<4)||chests.some(c=>Math.hypot(c.x-x,c.z-z)<10))continue;chests.push({x:x+.5,z:z+.5})}
+ const chests=[];for(let k=0;k<2000&&chests.length<3;k++){const x=Math.floor(R()*SX),z=Math.floor(R()*SZ);if(!okSpot(x,z,6)||mobs.some(m=>Math.hypot(m.hx-x,m.hz-z)<4)||chests.some(c=>Math.hypot(c.x-x,c.z-z)<10))continue;chests.push({x:x+.5,z:z+.5,chest:true})}
  const gems=[];for(let k=0;k<3000&&gems.length<26;k++){const x=Math.floor(R()*SX),z=Math.floor(R()*SZ);if(x<2||z<2||x>SX-3||z>SZ-3||lavaC[x*SZ+z])continue;let top=0;for(let y=SY-1;y>=0;y--)if(W[bid(x,y,z)]){top=y+1;break}
   if(top>=SY-2||gems.some(g=>Math.hypot(g.x-x,g.z-z)<4))continue;gems.push({x:x+.5,y:top+.9,z:z+.5})}
  return{W,H,blocked,lavaC,spawn,portal,mobs,chests,gems}}
