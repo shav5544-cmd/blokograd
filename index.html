@@ -488,7 +488,8 @@ function buildHero(skin,swordK){const L=c=>new THREE.MeshLambertMaterial({color:
  sword.position.y=-.55;sword.visible=false;armR.add(sword);
  return{grp,head,armL,armR,legL,legR,sword}}
 
-function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.open)netSend({t:'start',i});
+function startLevel(i,fromNet){try{return startLevel0(i,fromNet)}catch(e){console.error(e);stopGame();modal(`<h2>Ой, ошибка 😕</h2><p>Не удалось загрузить остров.</p><p style="font-size:12px;color:#c7cbe0">${esc(String(e&&e.message||e))}</p>`,[{t:'Попробовать снова',f:()=>startLevel(i,true)},{t:'На карту',cls:'grey',f:screenMap}])}}
+function startLevel0(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.open)netSend({t:'start',i});
  if(!window.THREE){modal('<h2>Не загрузилось</h2><p>Для 3D-мира нужен интернет. Проверь подключение и обнови страницу.</p>',[{t:'На карту',f:screenMap}]);return}
  const lv=LEVELS[i],bm=B3[lv.mob],w=genWorld(i);
  G=Object.assign(w,{i,lv,bm,state:'play',hearts:5,combo:0,got:0,killed:0,total:w.mobs.filter(m=>!m.guard).length,portalOpen:false,
@@ -549,7 +550,7 @@ function startLevel(i,fromNet){stopGame();closeModal();if(!fromNet&&NET&&NET.ope
  G.portalMesh.rotation.y=Math.PI/2;G.portalMesh.position.set(G.portal.x+.5,8.5,G.portal.z);sc.add(G.portalMesh);drawPortal();
  // герой
  G.hero=buildHero();sc.add(G.hero.grp);
- G.mp=!!(NET&&NET.open);if(G.mp&&!NET.host){G.p.z+=1.6;G.safe.z=G.p.z}G.netT=0;G.mobT=0;if(G.mp){G.friend=buildHero(NET.fSkin,NET.fSword);sc.add(G.friend.grp);if(NET.fPet){G.fpet=voxelMob(NET.fPet,.55);sc.add(G.fpet);G.fpet.position.set(G.fr.x-1,G.fr.y,G.fr.z)}G.fr={x:G.p.x+1.5,y:G.p.y,z:G.p.z,face:Math.PI/2,mv:0,sw:0};G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0}
+ G.mp=!!(NET&&NET.open);if(G.mp&&!NET.host){G.p.z+=1.6;G.safe.z=G.p.z}G.netT=0;G.mobT=0;if(G.mp){G.friend=buildHero(NET.fSkin,NET.fSword);sc.add(G.friend.grp);G.fr={x:G.p.x+1.5,y:G.p.y,z:G.p.z,face:Math.PI/2,mv:0,sw:0};G.friend.grp.add(nameTag(NET.fName));G.friend.phase=0;if(NET.fPet){G.fpet=voxelMob(NET.fPet,.55);sc.add(G.fpet);G.fpet.position.set(G.fr.x-1,G.fr.y,G.fr.z)}}
  if(S.pet&&SPR[S.pet]){G.pet=voxelMob(S.pet,.55);sc.add(G.pet);G.pet.position.set(G.p.x-1,G.p.y,G.p.z)}
  // мобы
  G.mobs.forEach(m=>{m.grp=voxelMob(m.type,m.size);sc.add(m.grp);if(m.guard){m.shield=new THREE.Mesh(new THREE.SphereGeometry(m.size*.85,20,14),new THREE.MeshBasicMaterial({color:'#5ad1ff',transparent:true,opacity:.28,depthWrite:false}));m.shield.position.y=m.size*.5;m.grp.add(m.shield)}m.x=m.hx;m.z=m.hz;m.y=groundY(m.x,m.z);m.tx=m.x;m.tz=m.z;m.nx=m.x;m.nz=m.z;m.nf=0;m.t=Math.random()*5;m.alive=true;m.maxhp=m.hp;m.flash=0;m.r=.45*m.size;m.wait=0})
@@ -584,7 +585,7 @@ const KMAP={KeyW:'f',ArrowUp:'f',KeyS:'b',ArrowDown:'b',KeyA:'l',ArrowLeft:'l',K
 document.addEventListener('keydown',e=>{if(!G||G.state!=='play'||modalBtn)return;if(G.banner>.4)G.banner=.4;if(e.code==='KeyQ'){usePotion();return}const k=KMAP[e.code];if(!k)return;e.preventDefault();if(k==='j'&&!G.keys.j)G.jumpBuf=.15;G.keys[k]=1});
 document.addEventListener('keyup',e=>{if(!G)return;const k=KMAP[e.code];if(k)G.keys[k]=0});
 window.addEventListener('blur',()=>{if(G)G.keys={}});
-function loop(ts){if(!G||G.dead)return;const dt=G.lt?Math.min(.05,(ts-G.lt)/1000):0;G.lt=ts;update(dt);if(!G||G.dead)return;camUpdate();G.renderer.render(G.scene,G.cam);G.raf=requestAnimationFrame(loop)}
+function loop(ts){if(!G||G.dead)return;const dt=G.lt?Math.min(.05,(ts-G.lt)/1000):0;G.lt=ts;try{update(dt)}catch(e){console.error(e)}if(!G||G.dead)return;try{camUpdate();G.renderer.render(G.scene,G.cam)}catch(e){console.error(e)}G.raf=requestAnimationFrame(loop)}
 const lerpA=(a,b,t)=>{let d=((b-a+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;return a+d*t};
 function burst(x,y,z,col,n,sp=4){const mat=new THREE.MeshLambertMaterial({color:col});for(let k=0;k<n;k++){const m=new THREE.Mesh(G.partGeo,mat);m.position.set(x,y,z);G.scene.add(m);
  G.parts.push({m,vx:(Math.random()-.5)*sp,vy:Math.random()*sp*.9+1,vz:(Math.random()-.5)*sp,life:.7+Math.random()*.5})}}
